@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const app = express();
+const jwt = require("jsonwebtoken");
+
 require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const port = process.env.PORT || 5000;
@@ -18,7 +20,8 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     const serviceCollection = client.db("HelloFoodies").collection("Services");
-
+    const reviewCollection = client.db("HelloFoodies").collection("Reviews");
+    // get services api
     app.get("/homeservices", async (req, res) => {
       const query = {};
       const cursor = serviceCollection.find(query);
@@ -36,6 +39,21 @@ async function run() {
       const query = { _id: ObjectId(id) };
       const service = await serviceCollection.findOne(query);
       res.send(service);
+    });
+    //post jwt token api
+    app.post("/jwt", (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "1d",
+      });
+      console.log(user);
+      res.send({ token });
+    });
+    //post review api
+    app.post("/reviews", async (req, res) => {
+      const review = req.body;
+      const result = await reviewCollection.insertOne(review);
+      res.send(result);
     });
   } finally {
     //never closed
