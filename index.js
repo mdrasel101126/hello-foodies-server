@@ -60,6 +60,14 @@ async function run() {
       const reviews = await cursor.toArray();
       res.send(reviews);
     });
+    //post api
+    //post service api
+    app.post("/services", async (req, res) => {
+      const service = req.body;
+      console.log(service);
+      const result = await serviceCollection.insertOne(service);
+      res.send(result);
+    });
 
     //post jwt token api
     app.post("/jwt", (req, res) => {
@@ -83,6 +91,19 @@ async function run() {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const result = await reviewCollection.deleteOne(query);
+      res.send(result);
+    });
+    //review update api
+    app.patch("/reviews/:id", async (req, res) => {
+      const id = req.params.id;
+      const newComment = req.body.newComment;
+      const query = { _id: ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          comment: newComment,
+        },
+      };
+      const result = await reviewCollection.updateOne(query, updateDoc);
       res.send(result);
     });
   } finally {
