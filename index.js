@@ -22,25 +22,34 @@ async function run() {
     const serviceCollection = client.db("HelloFoodies").collection("Services");
     const reviewCollection = client.db("HelloFoodies").collection("Reviews");
     // get services api
-    app.get("/homeservices", async (req, res) => {
+    /* app.get("/services", async (req, res) => {
       const query = {};
       const cursor = serviceCollection.find(query);
       const services = await cursor.limit(3).toArray();
       res.send(services);
-    });
-    app.get("/allservices", async (req, res) => {
+    }); */
+    app.get("/services", async (req, res) => {
       const query = {};
-      const cursor = serviceCollection.find(query);
-      const services = await cursor.toArray();
+      const options = {
+        sort: { publishedDate: -1 },
+      };
+      const cursor = serviceCollection.find(query, options);
+      let services = [];
+      if (req.query.amount) {
+        services = await cursor.limit(3).toArray();
+      } else {
+        services = await cursor.toArray();
+      }
+
       res.send(services);
     });
-    app.get("/allservices/:id", async (req, res) => {
+    app.get("/services/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const service = await serviceCollection.findOne(query);
       res.send(service);
     });
-    //get reviews by service id api
+    //get reviews by service id or user email api
     app.get("/reviews", async (req, res) => {
       let query = {};
       if (req.query.id) {
