@@ -40,19 +40,49 @@ async function run() {
       const service = await serviceCollection.findOne(query);
       res.send(service);
     });
+    //get reviews by service id api
+    app.get("/reviews", async (req, res) => {
+      let query = {};
+      if (req.query.id) {
+        query = {
+          service_id: req.query.id,
+        };
+      }
+      if (req.query.email) {
+        query = {
+          email: req.query.email,
+        };
+      }
+      const options = {
+        sort: { comment_date: -1 },
+      };
+      const cursor = reviewCollection.find(query, options);
+      const reviews = await cursor.toArray();
+      res.send(reviews);
+    });
+
     //post jwt token api
     app.post("/jwt", (req, res) => {
       const user = req.body;
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
         expiresIn: "1d",
       });
-      console.log(user);
+      //console.log(user);
       res.send({ token });
     });
     //post review api
     app.post("/reviews", async (req, res) => {
       const review = req.body;
       const result = await reviewCollection.insertOne(review);
+      res.send(result);
+    });
+    //delete api
+
+    // review delete api
+    app.delete("/reviews/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await reviewCollection.deleteOne(query);
       res.send(result);
     });
   } finally {
