@@ -17,17 +17,28 @@ const client = new MongoClient(uri, {
   serverApi: ServerApiVersion.v1,
 });
 
+function verifyJWT(req, res, next) {
+  const authHeader = req.headers.authorization;
+  //console.log(authHeader);
+
+  if (!authHeader) {
+    return res.status(401).send({ message: "unauthorized access" });
+  }
+  const token = authHeader.split(" ")[1];
+  //console.log(token);
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+    if (err) {
+      return res.status(401).send({ message: "unauthorized access" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+}
+
 async function run() {
   try {
     const serviceCollection = client.db("HelloFoodies").collection("Services");
     const reviewCollection = client.db("HelloFoodies").collection("Reviews");
-    // get services api
-    /* app.get("/services", async (req, res) => {
-      const query = {};
-      const cursor = serviceCollection.find(query);
-      const services = await cursor.limit(3).toArray();
-      res.send(services);
-    }); */
     app.get("/services", async (req, res) => {
       const query = {};
       const options = {
@@ -49,13 +60,28 @@ async function run() {
       const service = await serviceCollection.findOne(query);
       res.send(service);
     });
-    //get reviews by service id or user email api
+    //get reviews by service id api
     app.get("/reviews", async (req, res) => {
       let query = {};
       if (req.query.id) {
         query = {
           service_id: req.query.id,
         };
+      }
+      const options = {
+        sort: { comment_date: -1 },
+      };
+      const cursor = reviewCollection.find(query, options);
+      const reviews = await cursor.toArray();
+      res.send(reviews);
+    });
+    //get myreviews email api
+    app.get("/myreviews", verifyJWT, async (req, res) => {
+      let query = {};
+      const decoded = req.decoded;
+      //console.log("inside myreviews api ", decoded);
+      if (decoded.email !== req.query.email) {
+        res.send(403).send({ message: "forbidden access" });
       }
       if (req.query.email) {
         query = {
