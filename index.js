@@ -99,7 +99,7 @@ async function run() {
     //post service api
     app.post("/services", async (req, res) => {
       const service = req.body;
-      console.log(service);
+      //console.log(service);
       const result = await serviceCollection.insertOne(service);
       res.send(result);
     });
@@ -145,7 +145,7 @@ async function run() {
     //never closed
   }
 }
-run().catch(console.dir);
+run().catch((error) => console.log(error));
 
 app.get("/", (req, res) => {
   res.send("Hello Foodies Server Running");
